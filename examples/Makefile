@@ -187,7 +187,7 @@ else
 endif
 
 # RIVET (if RIVET use C++14).
-main111: $(PYTHIA) $$@.cc
+main111 main1011: $(PYTHIA) $$@.cc
 ifeq ($(RIVET_USE),true)
 	@echo $(RIVET_VERSION)
 	$(CXX) $@.cc -o $@ -w $(CXX_COMMON:c++11=$(RIVET_CSTD)) $(RIVET_FLAGS)\
