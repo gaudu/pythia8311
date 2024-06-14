@@ -14,12 +14,6 @@
 #include <vector>
 
 template <typename K, typename V>
-void printMap(const std::map<K, V>& m) {
-    for (const auto& pair : m) {
-        std::cout << "Key: " << pair.first << ", Value: " << pair.second << std::endl;
-    }
-}
-template <typename K, typename V>
 std::vector<K> getMapKeys(const std::map<K, V>& inputMap) {
     std::vector<K> keys;
     for (const auto& pair : inputMap) {
@@ -40,7 +34,10 @@ int main(int argc, char *argv[]) {
     return 1; 
   }
 
-  int nEvents = 1e4;
+  int nEvents = 10;
+  int idA = atoi(argv[1]);
+  int idB = atoi(argv[2]);
+
   std::map<std::string, std::string> idA_map = {
     {"2212", "p"}, {"-2212", "ap"}, {"2112", "n"}, {"-2112", "an"},
     {"111", "pi0"}, {"211", "pip"}, {"-211", "pim"},
@@ -63,21 +60,21 @@ int main(int argc, char *argv[]) {
     oldCout = std::cout.rdbuf(logBuf.rdbuf());
     logBuf.open((out == "" ? "pythia.log" : out + ".log"));
   }
- 
+  
   // Pythia configuration
   Pythia pythia; 
-  pythia.readString("Beams:idA = " + std::string(argv[1]));
-  pythia.readString("Beams:idB = " + std::string(argv[2]));
-  pythia.readString("Beams:frameType = 1");
+
+  pythia.settings.mode("Beams:idA", idA);
+  pythia.settings.mode("Beams:idB", idB);
   
   double e_lab = pow(10, std::stoi(argv[3])); // GeV
-  double m_projectile = pythia.particleData.m0(std::stoi(argv[1])); // GeV
-  double m_target = pythia.particleData.m0(std::stoi(argv[2])); // GeV
+  double m_projectile = pythia.particleData.m0(idA); // GeV
+  double m_target = pythia.particleData.m0(idB); // GeV
   double p_lab = sqrt(e_lab*e_lab - m_projectile*m_projectile);
   double calculated_eCM = sqrt((e_lab + m_target)*(e_lab + m_target) - p_lab*p_lab);
   std::cout << "calculated_eCM = " << calculated_eCM << '\n'; // GeV
-
-  pythia.readString("Beams:eCM = "+std::to_string(calculated_eCM));
+  pythia.readString("Beams:frameType = 1");pythia.readString("Beams:frameType = 1");
+  pythia.settings.parm("Beams:eCM", calculated_eCM);
 
   pythia.readString("SoftQCD:all = on");
   // use Angantyr for minimum-bias pp collisions
@@ -94,22 +91,8 @@ int main(int argc, char *argv[]) {
   for ( int iEvent = 0; iEvent < nEvents; ++iEvent ) { 
     if (!pythia.next()) continue;
   }
-
-  /*std::cout << "Contents of sigGenM:" << std::endl;
-  printMap(pythia.info.sigGenM);
-  std::cout << "Contents of sigErrM:" << std::endl;
-  printMap(pythia.info.sigErrM);*/
   
   std::vector<int> sigGenMKeys = getMapKeys(pythia.info.sigGenM);
-  //std::vector<int> sigErrMKeys = getMapKeys(pythia.info.sigErrM);
-  /*for (const auto& key : sigGenMKeys) {
-  	std::cout << "sigGenMKeys" << std::endl;
-        std::cout << key << std::endl;
-    } 
-  for (const auto& key : sigErrMKeys) {
-  	std::cout << "sigErrMKeys" << std::endl;
-        std::cout << key << std::endl;
-    }*/
 
   pythia.stat();
 
